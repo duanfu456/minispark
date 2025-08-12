@@ -289,7 +289,7 @@ print(result)
 ### 4. 查询结果表注册
 `execute_query`方法支持将查询结果直接注册为表，方便后续关联查询：
 
-```
+```python
 // 将查询结果注册为新表
 spark.execute_query("""
     SELECT department, AVG(salary) as avg_salary
@@ -344,12 +344,8 @@ python test/run_tests.py
 
 ## 示例程序
 
-项目提供了一些完整的示例程序，展示了MiniSpark的各种功能。这些示例位于[examples](file://d:/python/softwarwe/minispqrk/examples)目录中：
+项目提供了一些完整的示例程序，展示了MiniSpark的各种功能。这些示例位于[examples](file://./examples)目录中：
 
-- [example_row_function.py](file://d:/python/softwarwe/minispqrk/examples/example_row_function.py) - 演示如何使用简化后的API处理整行数据
-- [example_multi_column.py](file://d:/python/softwarwe/minispqrk/examples/example_multi_column.py) - 演示如何处理多列数据
-- [comprehensive_example.py](file://d:/python/softwarwe/minispqrk/examples/comprehensive_example.py) - 综合示例，展示多种功能的组合使用
-- 各数据源特定示例（csv、excel、json、mysql、sqlite、duckdb目录）
 
 要运行示例程序：
 
@@ -425,7 +421,7 @@ df_with_benefits = processor.apply_custom_function(
     calculate_employee_benefits,  // 函数
     table_name='employees_with_benefits'  // 自动注册为新表
 )
-```
+
 
 // 注册并使用处理整行数据的函数
 def calculate_performance_score(row):
