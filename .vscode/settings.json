@@ -1,0 +1,18 @@
+{
+    "sqltools.connections": [
+        {
+            "mysqlOptions": {
+                "authProtocol": "default",
+                "enableSsl": "Disabled"
+            },
+            "previewLimit": 50,
+            "server": "47.108.200.193",
+            "port": 3306,
+            "driver": "MySQL",
+            "name": "duanfu.vip",
+            "username": "duanfu",
+            "password": "HTb55A2rFFa4nGft",
+            "database": "duanfu"
+        }
+    ]
+}
