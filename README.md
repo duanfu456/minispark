@@ -521,7 +521,7 @@ df_multi_exploded = processor.explode_column(
     [';', '|', '-'], 
     table_name='multi_exploded_data'  // 自动注册为新表
 )
-```
+
 
 // 现在可以将拆分后的数据注册到引擎中进行SQL查询
 spark.engine.register_table('exploded_data', df_exploded)
