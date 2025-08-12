@@ -8,8 +8,8 @@ with open("CHANGELOG.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="minispqrk",
-    version="0.1.6",
-    author="duanfu",
+    version="0.1.8",
+    author="段福",
     author_email="duanfu456@163.com",
     description="一个轻量级的Python库，用于从多种数据源读取数据并在本地进行高效处理，类似于Apache Spark的功能",
     long_description=long_description,
@@ -46,6 +46,6 @@ setup(
     },
     include_package_data=True,
     package_data={
-        "minispark": ["../config.toml"],
+        "minispark": ["config.toml"],
     },
 )

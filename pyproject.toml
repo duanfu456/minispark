@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "minispqrk"
-version = "0.1.6"
+version = "0.1.8"
 description = "一个轻量级的Python库，用于从多种数据源读取数据并在本地进行高效处理，类似于Apache Spark的功能"
 readme = "README.md"
 authors = [{name = "段福", email = "duanfu456@163.cm"}]
