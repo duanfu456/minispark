@@ -2,7 +2,7 @@ import pandas as pd
 import toml
 import os
 import tempfile
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from loguru import logger
 from .connectors.base import BaseConnector
 from .engines.base import BaseEngine
@@ -10,22 +10,44 @@ from .processors.data_processor import DataProcessor
 import time
 import atexit
 import shutil
+from types import SimpleNamespace
+
+
+def dict_to_namespace(d):
+    """递归将嵌套字典转换为 SimpleNamespace 对象"""
+    if isinstance(d, dict):
+        # 对字典中的每个值递归处理
+        return SimpleNamespace(**{k: dict_to_namespace(v) for k, v in d.items()})
+    elif isinstance(d, list):
+        # 如果遇到列表，对列表中的每个元素递归处理
+        return [dict_to_namespace(item) for item in d]
+    else:
+        # 非字典/列表类型直接返回
+        return d
 
 
 class MiniSpark:
     """MiniSpark主类"""
     
-    def __init__(self, config_path: str = "config.toml"):
+    def __init__(self, config: Optional[Dict[str, Any]] = None, config_path: Optional[str] = None):
         """
         初始化MiniSpark
         
         Args:
+            config: 配置字典，直接提供配置信息
             config_path: 配置文件路径
         """
         # 配置日志
         logger.info("初始化MiniSpark")
         
-        self.config = self._load_config(config_path)
+        # 优先使用传入的config字典，否则加载配置文件，最后使用默认配置
+        if config is not None:
+            self.config = dict_to_namespace(config)
+            logger.info("使用传入的配置字典")
+        else:
+            config_file = config_path or "config.toml"
+            config_dict = self._load_config(config_file)
+            self.config = dict_to_namespace(config_dict)
         self.connectors: Dict[str, BaseConnector] = {}
         # 用于跟踪临时数据库文件，以便在程序结束时清理
         self.temp_database_path = None
@@ -33,12 +55,30 @@ class MiniSpark:
         self.processor = DataProcessor()
         # 设置DataProcessor对MiniSpark的引用
         self.processor.set_minispark(self)
+        
+        # 初始化处理重复列名的设置
+        if hasattr(self.config, 'handle_duplicate_columns'):
+            self.engine.handle_duplicate_columns = self.config.handle_duplicate_columns
         self.tables: Dict[str, pd.DataFrame] = {}
         
         # 注册退出处理函数
         atexit.register(self._cleanup_temp_database)
         
         logger.info("MiniSpark初始化完成")
+        
+    @property
+    def handle_duplicate_columns(self):
+        """获取处理重复列名的方式"""
+        return self.config.handle_duplicate_columns if hasattr(self.config, 'handle_duplicate_columns') else 'rename'
+    
+    @handle_duplicate_columns.setter
+    def handle_duplicate_columns(self, value):
+        """设置处理重复列名的方式"""
+        logger.info(f"设置处理重复列名的方式: {value}")
+        self.config.handle_duplicate_columns = value
+        # 更新引擎中的设置
+        if self.engine:
+            self.engine.handle_duplicate_columns = value
     
     def _load_config(self, config_path: str) -> Dict[str, Any]:
         """加载配置文件"""
@@ -48,6 +88,11 @@ class MiniSpark:
             with open(config_path, 'r', encoding='utf-8') as f:
                 config = toml.load(f)
             logger.info("配置文件加载成功")
+            
+            # 确保配置中包含handle_duplicate_columns
+            if 'handle_duplicate_columns' not in config:
+                config['handle_duplicate_columns'] = 'rename'
+                
             return config
         except FileNotFoundError:
             logger.warning(f"配置文件 {config_path} 不存在，使用默认配置")
@@ -59,13 +104,14 @@ class MiniSpark:
                 },
                 "storage": {
                     "format": "parquet"
-                }
+                },
+                "handle_duplicate_columns": "rename"
             }
     
     def _init_engine(self) -> BaseEngine:
         """初始化本地处理引擎"""
-        engine_type = self.config.get("engine", {}).get("type", "sqlite")
-        database_path = self.config.get("engine", {}).get("database_path", ":memory:")
+        engine_type = self.config.engine.type if hasattr(self.config, 'engine') and hasattr(self.config.engine, 'type') else 'sqlite'
+        database_path = self.config.engine.database_path if hasattr(self.config, 'engine') and hasattr(self.config.engine, 'database_path') else ':memory:'
         
         # 处理临时文件数据库路径
         final_database_path = database_path
@@ -99,14 +145,19 @@ class MiniSpark:
                 logger.info("DuckDB引擎测试查询成功")
                 
                 logger.info("DuckDB引擎初始化成功")
+                engine.handle_duplicate_columns = self.handle_duplicate_columns
                 return engine
             except Exception as e:
                 logger.warning(f"DuckDB引擎初始化失败: {e}，回退到SQLite引擎")
                 from .engines.sqlite_engine import SQLiteEngine
-                return SQLiteEngine(final_database_path)
+                engine = SQLiteEngine(final_database_path)
+                engine.handle_duplicate_columns = self.handle_duplicate_columns
+                return engine
         elif engine_type == "sqlite":
             from .engines.sqlite_engine import SQLiteEngine
-            return SQLiteEngine(final_database_path)
+            engine = SQLiteEngine(final_database_path)
+            engine.handle_duplicate_columns = self.handle_duplicate_columns
+            return engine
         else:
             logger.error(f"不支持的引擎类型: {engine_type}")
             raise ValueError(f"不支持的引擎类型: {engine_type}")
@@ -124,6 +175,48 @@ class MiniSpark:
                 logger.info(f"已清理临时数据库文件: {self.temp_database_path}")
             except Exception as e:
                 logger.warning(f"清理临时数据库文件失败: {e}")
+    
+    def set_config(self, config: Dict[str, Any]):
+        """
+        设置配置字典
+        
+        Args:
+            config: 配置字典
+        """
+        logger.info("设置新的配置")
+        self.config = dict_to_namespace(config)
+        # 重新初始化引擎以应用新配置
+        self.engine = self._init_engine()
+    
+    def set_config_path(self, config_path: str):
+        """
+        通过配置文件路径设置配置
+        
+        Args:
+            config_path: 配置文件路径
+        """
+        logger.info(f"通过路径设置配置: {config_path}")
+        config_dict = self._load_config(config_path)
+        self.config = dict_to_namespace(config_dict)
+        # 重新初始化引擎以应用新配置
+        self.engine = self._init_engine()
+    
+    def set_handle_duplicate_columns(self, handle_duplicate_columns: str):
+        """
+        设置处理重复列名的方式
+        
+        Args:
+            handle_duplicate_columns: 处理重复列名的方式:
+                "rename" - 自动重命名重复列
+                "error" - 抛出异常
+                "keep_first" - 只保留第一个重复列，删除其他重复列
+        """
+        logger.info(f"设置处理重复列名的方式: {handle_duplicate_columns}")
+        self.handle_duplicate_columns = handle_duplicate_columns
+        # 更新引擎中的设置
+        if self.engine:
+            self.engine.handle_duplicate_columns = self.handle_duplicate_columns
+    
     
     def add_connector(self, name: str, connector: BaseConnector):
         """

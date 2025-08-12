@@ -1,107 +1,85 @@
+#!/usr/bin/env python3
 """
-运行所有示例
+运行所有示例的脚本
 """
 
-import os
 import sys
-import subprocess
-import time
+import os
 
 # 添加项目根目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+    print(f"INFO: 已将项目根目录添加到Python路径: {project_root}")
 
-def run_example(example_name, example_path):
+def run_example(example_name, example_func):
     """运行单个示例"""
-    print(f"\n{'='*50}")
-    print(f"运行 {example_name} 示例")
-    print(f"{'='*50}")
+    print(f"\n{'='*60}")
+    print(f"运行示例: {example_name}")
+    print('='*60)
     
     try:
-        # 切换到示例目录并运行
-        example_dir = os.path.dirname(example_path)
-        example_file = os.path.basename(example_path)
-        
-        # 使用subprocess运行示例
-        result = subprocess.run(
-            [sys.executable, example_file],
-            cwd=example_dir,
-            capture_output=True,
-            text=True,
-            timeout=60  # 60秒超时
-        )
-        
-        if result.returncode == 0:
-            print(f"✓ {example_name} 示例运行成功")
-            # 只打印关键输出，避免日志过多
-            lines = result.stdout.strip().split('\n')
-            for line in lines:
-                if '成功' in line or '完成' in line or '结果' in line or line.startswith('===') or '✓' in line or '🎉' in line or '❌' in line:
-                    print(f"  {line}")
-        else:
-            print(f"✗ {example_name} 示例运行失败")
-            print(f"  错误信息: {result.stderr}")
-            return False
-            
-    except subprocess.TimeoutExpired:
-        print(f"✗ {example_name} 示例运行超时")
-        return False
+        example_func()
+        print(f"\n✅ {example_name} 运行成功")
+        return True
     except Exception as e:
-        print(f"✗ {example_name} 示例运行出错: {e}")
+        print(f"\n❌ {example_name} 运行失败: {e}")
+        import traceback
+        traceback.print_exc()
         return False
-    
-    return True
 
 def main():
-    """主函数"""
-    print("开始运行所有示例...")
+    """主函数，运行所有示例"""
+    print("开始运行所有MiniSpark示例...")
     
-    # 获取所有示例目录
-    examples_dir = os.path.dirname(__file__)
-    example_dirs = [d for d in os.listdir(examples_dir) 
-                   if os.path.isdir(os.path.join(examples_dir, d)) and d != '__pycache__']
+    # 导入所有示例
+    try:
+        from examples.duplicate_columns_example import (
+            duplicate_columns_rename_example,
+            duplicate_columns_error_example,
+            duplicate_columns_keep_first_example,
+            config_dict_example,
+            setter_methods_example,
+            dot_object_config_example,
+            best_practice_example
+        )
+        print("INFO: 成功加载模块: duplicate_columns_example")
+    except ImportError as e:
+        print(f"ERROR: 无法加载模块 duplicate_columns_example: {e}")
+        sys.exit(1)
     
-    # 成功和失败计数
-    success_count = 0
-    fail_count = 0
+    # 定义要运行的示例列表
+    examples = [
+        ("重命名重复列示例", duplicate_columns_rename_example),
+        ("错误处理方式示例", duplicate_columns_error_example),
+        ("只保留第一个重复列示例", duplicate_columns_keep_first_example),
+        ("配置字典示例", config_dict_example),
+        ("Setter方法示例", setter_methods_example),
+        ("点对象配置示例", dot_object_config_example),
+        ("最佳实践示例", best_practice_example)
+    ]
     
-    # 特别处理MySQL示例（运行我们新创建的测试示例）
-    if 'mysql' in example_dirs:
-        print("\n注意: MySQL示例需要特殊配置才能运行")
-        print("将运行专门的MySQL测试示例")
-        # 从示例列表中移除mysql，单独处理
-        example_dirs.remove('mysql')
-        
-        # 运行MySQL测试示例
-        mysql_example_path = os.path.join(examples_dir, 'mysql', 'test_mysql_example.py')
-        if run_example("MySQL", mysql_example_path):
-            success_count += 1
+    # 运行所有示例
+    passed = 0
+    failed = 0
+    
+    for example_name, example_func in examples:
+        if run_example(example_name, example_func):
+            passed += 1
         else:
-            fail_count += 1
-    
-    # 运行其他示例
-    for example_dir in example_dirs:
-        example_path = os.path.join(examples_dir, example_dir, 'example.py')
-        if os.path.exists(example_path):
-            if run_example(example_dir.upper(), example_path):
-                success_count += 1
-            else:
-                fail_count += 1
-        else:
-            print(f"\n警告: {example_dir} 示例文件不存在")
-            fail_count += 1
+            failed += 1
     
     # 输出总结
-    print(f"\n{'='*50}")
-    print("示例运行总结")
-    print(f"{'='*50}")
-    print(f"成功: {success_count}")
-    print(f"失败: {fail_count}")
-    print(f"总计: {success_count + fail_count}")
+    print(f"\n{'='*60}")
+    print("所有示例运行完成!")
+    print(f"成功: {passed}")
+    print(f"失败: {failed}")
+    print(f"总计: {passed + failed}")
+    print('='*60)
     
-    if fail_count == 0:
-        print("\n🎉 所有示例运行成功!")
-    else:
-        print(f"\n⚠️  有 {fail_count} 个示例运行失败")
+    # 如果有任何示例失败，返回非零退出码
+    if failed > 0:
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

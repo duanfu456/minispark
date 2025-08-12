@@ -15,6 +15,8 @@ MiniSpark是一个轻量级的Python库，用于从多种数据源读取数据�
 - 支持自定义函数返回多个列
 - 支持查看已注册的表信息
 - DataProcessor处理后的数据可自动注册到本地引擎
+- 灵活的配置管理，支持多种配置方式
+- 可配置的重复列名处理策略
 
 ## 安装
 
@@ -358,7 +360,11 @@ python comprehensive_example.py
 
 ## 配置
 
-MiniSpark使用`config.toml`文件进行配置：
+MiniSpark支持多种配置方式，提供了灵活的配置管理机制：
+
+### 1. 配置文件方式（默认）
+
+使用`config.toml`文件进行配置：
 
 ```toml
 // 本地处理引擎配置
@@ -372,6 +378,101 @@ database_path = ":memory:"
 [storage]
 // 存储格式，支持 parquet 或 avro
 format = "parquet"
+
+// 重复列名处理方式，支持 rename/error/keep_first
+handle_duplicate_columns = "rename"
+```
+
+### 2. 配置字典方式
+
+可以直接传递配置字典：
+
+```python
+from minispark import MiniSpark
+
+config = {
+    "engine": {
+        "type": "sqlite",
+        "database_path": ":memory:"
+    },
+    "storage": {
+        "format": "parquet"
+    }
+}
+
+spark = MiniSpark(config=config)
+```
+
+### 3. 指定配置文件路径
+
+可以指定配置文件的路径：
+
+```python
+from minispark import MiniSpark
+
+spark = MiniSpark(config_path="/path/to/your/config.toml")
+```
+
+### 4. 点对象方式访问和修改配置
+
+可以通过点对象方式访问和修改配置：
+
+```python
+from minispark import MiniSpark
+
+spark = MiniSpark()
+
+// 访问配置
+print(spark.config.engine.type)
+print(spark.config.engine.database_path)
+print(spark.config.storage.format)
+
+// 修改配置
+spark.config.engine.type = "sqlite"
+spark.config.engine.database_path = ":memory:"
+spark.config.storage.format = "parquet"
+```
+
+### 5. 属性方式访问和修改配置
+
+可以通过属性方式访问和修改配置：
+
+```python
+from minispark import MiniSpark
+
+spark = MiniSpark()
+
+// 访问配置
+print(spark.config.engine.type)
+print(spark.config.engine.database_path)
+print(spark.config.storage.format)
+print(spark.config.handle_duplicate_columns)
+
+// 修改配置
+spark.config.engine.type = "sqlite"
+spark.config.engine.database_path = ":memory:"
+spark.config.storage.format = "parquet"
+spark.config.handle_duplicate_columns = "error"
+```
+
+### 6. Setter方法方式
+
+可以使用setter方法修改配置：
+
+```python
+from minispark import MiniSpark
+
+spark = MiniSpark()
+
+// 设置新的配置字典
+spark.set_config({
+    "engine": {"type": "sqlite"},
+    "storage": {"format": "parquet"},
+    "handle_duplicate_columns": "error"
+})
+
+// 通过配置文件路径设置配置
+spark.set_config_path("/path/to/your/config.toml")
 ```
 
 ## 依赖
@@ -390,6 +491,14 @@ format = "parquet"
 ## 数据处理功能
 
 MiniSpark提供了一个强大的数据处理器，可用于对数据进行各种操作，处理后的结果数据表可以自动注册到本地引擎中，方便后续查询和分析。
+
+## 重复列名处理策略
+
+MiniSpark支持三种处理重复列名的策略：
+
+1. **rename**（默认）：自动重命名重复列，在重复列名后添加后缀（如`_2`, `_3`等）
+2. **error**：当发现重复列名时抛出异常
+3. **keep_first**：只保留第一个重复列，删除其他重复列
 
 ### 1. 自定义函数应用
 
@@ -569,4 +678,4 @@ examples/
 └── duckdb/                          # DuckDB相关示例
     ├── example.py
     └── generate_data.py
-```
+``````

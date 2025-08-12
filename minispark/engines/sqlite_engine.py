@@ -12,6 +12,7 @@ class SQLiteEngine(BaseEngine):
     def __init__(self, database_path: str = ":memory:"):
         super().__init__()
         self.database_path = database_path
+        self.handle_duplicate_columns = "rename"  # 默认处理方式：重命名重复列
         self.connection = None
         logger.info(f"初始化SQLite引擎, 数据库路径: {database_path}")
         
@@ -45,6 +46,80 @@ class SQLiteEngine(BaseEngine):
         logger.info(f"注册表到SQLite引擎: {table_name}, 形状: {dataframe.shape}")
         
         try:
+            # 处理重复列名问题
+            cols = pd.Series(dataframe.columns)
+            cols_counts = cols.value_counts()
+            duplicated_cols = cols_counts[cols_counts > 1].index
+            
+            # 根据配置处理重复列名
+            if len(duplicated_cols) > 0:
+                if self.handle_duplicate_columns == "error":
+                    # 抛出异常
+                    raise ValueError(f"表 {table_name} 包含重复列名: {list(duplicated_cols)}")
+                elif self.handle_duplicate_columns == "rename":
+                    # 为重复的列名添加后缀以区分
+                    logger.warning(f"发现重复列名: {list(duplicated_cols)}, 正在处理...")
+                    new_cols = []
+                    col_counters = {col: 0 for col in duplicated_cols}
+                    
+                    for col in dataframe.columns:
+                        if col in duplicated_cols:
+                            col_counters[col] += 1
+                            if col_counters[col] > 1:
+                                new_col_name = f"{col}_{col_counters[col]}"
+                                new_cols.append(new_col_name)
+                            else:
+                                new_cols.append(col)
+                        else:
+                            new_cols.append(col)
+                    
+                    dataframe.columns = new_cols
+                    logger.info(f"重复列名处理完成，新列名: {[col for col, count in col_counters.items() if count > 1]}")
+                elif self.handle_duplicate_columns == "keep_first":
+                    # 只保留第一个重复列，删除其他重复列
+                    logger.warning(f"发现重复列名: {list(duplicated_cols)}, 只保留第一个...")
+                    
+                    # 记录要删除的列名
+                    cols_to_drop = []
+                    seen_cols = set()
+                    dropped_col_names = []
+                    
+                    # 从左到右遍历列名，标记需要删除的列（保留第一个）
+                    for i in range(len(dataframe.columns)):
+                        col = dataframe.columns[i]
+                        if col in duplicated_cols:
+                            if col in seen_cols:
+                                cols_to_drop.append(col)
+                                dropped_col_names.append(col)
+                            else:
+                                seen_cols.add(col)
+                    
+                    # 删除重复的列
+                    if cols_to_drop:
+                        dataframe.drop(columns=cols_to_drop, inplace=True)
+                    
+                    logger.info(f"重复列名处理完成，已删除重复列: {dropped_col_names}")
+                else:
+                    # 未知处理方式，使用默认的重命名方式
+                    logger.warning(f"未知的重复列名处理方式: {self.handle_duplicate_columns}，使用默认的重命名方式")
+                    logger.warning(f"发现重复列名: {list(duplicated_cols)}, 正在处理...")
+                    new_cols = []
+                    col_counters = {col: 0 for col in duplicated_cols}
+                    
+                    for col in dataframe.columns:
+                        if col in duplicated_cols:
+                            col_counters[col] += 1
+                            if col_counters[col] > 1:
+                                new_col_name = f"{col}_{col_counters[col]}"
+                                new_cols.append(new_col_name)
+                            else:
+                                new_cols.append(col)
+                        else:
+                            new_cols.append(col)
+                    
+                    dataframe.columns = new_cols
+                    logger.info(f"重复列名处理完成，新列名: {[col for col, count in col_counters.items() if count > 1]}")
+            
             conn = self._get_connection()
             dataframe.to_sql(table_name, conn, if_exists='replace', index=False)
             self.tables[table_name] = dataframe

@@ -1,5 +1,25 @@
 # 更新日志
 
+## [0.1.8] - 2025-08-12
+
+### 新增功能
+
+- 将handle_duplicate_columns参数移至配置中管理：
+  - 作为配置项，可以通过config.toml或配置字典进行设置
+  - 支持通过点对象方式访问和修改（spark.config.handle_duplicate_columns）
+  - 支持通过属性访问和修改（spark.handle_duplicate_columns）
+  - 保持向后兼容，默认值仍为"rename"
+
+## [0.1.7] - 2025-08-12
+
+### 新增功能
+
+- 增强MiniSpark配置管理，支持多种配置方式：
+  - 支持通过点对象方式访问和修改配置（如spark.config.engine.type）
+  - 支持使用SimpleNamespace实现嵌套配置访问
+  - 保持向后兼容，原有的配置字典和配置文件方式仍然可用
+  - 移除了属性风格配置访问（如spark.engine_type），统一使用点对象方式
+
 ## [0.1.6] - 2025-08-12
 
 ### 新增功能
@@ -108,4 +128,4 @@
 - 添加了setup.py和pyproject.toml配置文件
 - 构建了可分发的Python包（wheel和源码包）
 - 添加了MANIFEST.in文件以包含非Python文件
-- 创建了CLI入口点
+- 创建了CLI入口点```
