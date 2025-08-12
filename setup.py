@@ -6,18 +6,15 @@ with open("README.md", "r", encoding="utf-8") as fh:
 with open("CHANGELOG.md", "r", encoding="utf-8") as fh:
     changelog = fh.read()
 
-# 从pyproject.toml获取版本信息
-import toml
-
 setup(
     name="minispqrk",
     version="0.1.6",
-    author="Your Name",
-    author_email="your.email@example.com",
+    author="duanfu",
+    author_email="duanfu456@163.com",
     description="一个轻量级的Python库，用于从多种数据源读取数据并在本地进行高效处理，类似于Apache Spark的功能",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/minispark",
+    url="https://github.com/duanfu456/minispark",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 3 - Alpha",
