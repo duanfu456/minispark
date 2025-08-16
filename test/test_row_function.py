@@ -40,8 +40,8 @@ class TestRowFunction(unittest.TestCase):
         # 应用函数，不指定具体列
         result = self.processor.apply_custom_function(
             data, 
-            'bonus',
-            process_row
+            process_row,
+            'bonus'
         )
         
         # 验证结果
@@ -112,8 +112,8 @@ class TestRowFunction(unittest.TestCase):
         # 应用函数
         result = self.processor.apply_custom_function(
             data, 
-            'gpa',
-            calculate_gpa
+            calculate_gpa,
+            'gpa'
         )
         
         # 验证结果

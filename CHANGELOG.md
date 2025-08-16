@@ -1,5 +1,16 @@
 # 更新日志
 
+## [0.1.9] - 2025-08-16
+
+### 新增功能
+
+- 增强DataProcessor的apply_custom_function方法，支持new_column_name默认为None：
+  - new_column_name参数现在默认为None
+  - 当new_column_name为None时，函数可以返回字典或字典列表来动态创建列或展开行
+  - 函数返回字典时，字典的键会成为新列名，值会成为对应的数据
+  - 函数返回字典列表时，每个字典会扩展成一行数据
+  - 保持向后兼容，原有使用方式不变
+
 ## [0.1.8] - 2025-08-13
 
 ### 新增功能
@@ -128,4 +139,4 @@
 - 添加了setup.py和pyproject.toml配置文件
 - 构建了可分发的Python包（wheel和源码包）
 - 添加了MANIFEST.in文件以包含非Python文件
-- 创建了CLI入口点```
+- 创建了CLI入口点``````

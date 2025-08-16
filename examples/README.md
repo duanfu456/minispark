@@ -24,6 +24,7 @@ examples/
 ├── example_row_function.py     # 简化API处理整行数据示例
 ├── example_multi_column.py     # 多列返回功能示例
 ├── example_auto_register.py    # DataProcessor自动注册功能示例
+├── example_dict_return.py      # 返回字典功能示例
 ├── comprehensive_example.py    # 综合示例
 └── run_all_examples.py         # 运行所有示例的脚本
 ```
@@ -43,6 +44,7 @@ uv run python examples/excel/explode_example.py
 uv run python examples/example_row_function.py
 uv run python examples/example_multi_column.py
 uv run python examples/example_auto_register.py
+uv run python examples/example_dict_return.py
 uv run python examples/comprehensive_example.py
 ```
 
@@ -81,6 +83,9 @@ uv pip install pymysql duckdb openpyxl
 
 ### example_auto_register.py
 演示如何使用DataProcessor处理数据后自动将结果注册到本地引擎，便于后续查询和分析。
+
+### example_dict_return.py
+演示当[new_column_name](file:///d:/python/softwarwe/minispqrk/minispark/processors/data_processor.py#L71-L71)为None时，如何处理函数返回字典或字典列表的情况，自动创建新列或展开多行。
 
 ### comprehensive_example.py
 综合示例，展示所有支持的数据源类型使用方法。

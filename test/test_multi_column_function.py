@@ -32,8 +32,8 @@ class TestSimplifiedAPI(unittest.TestCase):
         # 应用自定义函数（通过访问整行数据实现单列处理）
         result = self.processor.apply_custom_function(
             data, 
-            'salary_with_tax',
-            lambda row: row['salary'] * 1.1
+            lambda row: row['salary'] * 1.1,
+            'salary_with_tax'
         )
         
         # 验证结果
@@ -56,8 +56,8 @@ class TestSimplifiedAPI(unittest.TestCase):
         # 应用自定义函数（通过访问整行数据实现多列处理）
         result = self.processor.apply_custom_function(
             data, 
-            'total_compensation',
-            lambda row: row['salary'] + row['bonus']
+            lambda row: row['salary'] + row['bonus'],
+            'total_compensation'
         )
         
         # 验证结果
@@ -90,8 +90,8 @@ class TestSimplifiedAPI(unittest.TestCase):
         # 应用自定义函数（通过访问整行数据实现多列处理）
         result = self.processor.apply_custom_function(
             data, 
-            'employee_level',
-            calculate_level
+            calculate_level,
+            'employee_level'
         )
         
         # 验证结果

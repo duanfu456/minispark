@@ -66,15 +66,15 @@ class DataProcessor:
             logger.error(f"函数 {function_name} 应用失败: {e}")
             raise
     
-    def apply_custom_function(self, dataframe: pd.DataFrame, new_column_name: Union[str, List[str]],
-                             func: Callable, setswifter=True, table_name: Optional[str] = None, 
+    def apply_custom_function(self, dataframe: pd.DataFrame, func: Callable, new_column_name: Union[str, List[str]] = None,
+                             setswifter=True, table_name: Optional[str] = None, 
                              register: bool = True) -> pd.DataFrame:
         """
         将自定义函数应用于数据表的行
         
         Args:
             dataframe: 输入的DataFrame
-            new_column_name: 新列的名称，可以是字符串或字符串列表
+            new_column_name: 新列的名称，可以是字符串或字符串列表，如果为None则根据函数返回的字典动态创建列
             func: 自定义函数
             table_name: 表名称，如果提供则将结果注册到本地引擎
             register: 是否注册到本地引擎（仅在table_name提供时有效）
@@ -88,7 +88,36 @@ class DataProcessor:
                 result = dataframe.apply(func, axis=1)
             
             # 处理返回的结果
-            if isinstance(new_column_name, str):
+            if new_column_name is None:
+                # 当new_column_name为None时，处理函数返回字典或字典列表的情况
+                if len(result) > 0:
+                    first_result = result.iloc[0]
+                    
+                    # 判断是否是字典列表的情况（需要展开成多行）
+                    if isinstance(first_result, list) and len(first_result) > 0 and isinstance(first_result[0], dict):
+                        # 处理函数返回List[dict]的情况
+                        expanded_rows = []
+                        
+                        for idx, row in dataframe.iterrows():
+                            result_item = result.iloc[idx]
+                            if isinstance(result_item, list) and all(isinstance(item, dict) for item in result_item):
+                                # 对于每个字典创建一行新数据
+                                for dict_item in result_item:
+                                    new_row = row.to_dict()
+                                    new_row.update(dict_item)
+                                    expanded_rows.append(new_row)
+                            else:
+                                # 如果不是列表或不是字典列表，则直接添加原行
+                                expanded_rows.append(row.to_dict())
+                        
+                        dataframe = pd.DataFrame(expanded_rows)
+                    elif isinstance(first_result, dict):
+                        # 处理函数返回dict的情况
+                        result_df = pd.DataFrame(result.tolist())
+                        dataframe = pd.concat([dataframe.reset_index(drop=True), result_df.reset_index(drop=True)], axis=1)
+                    else:
+                        raise ValueError("当new_column_name为None时，函数必须返回dict或List[dict]")
+            elif isinstance(new_column_name, str):
                 # 单列情况
                 dataframe[new_column_name] = result
             elif isinstance(new_column_name, list):
@@ -111,7 +140,7 @@ class DataProcessor:
                     for col_name in new_column_name:
                         dataframe[col_name] = result
             else:
-                raise ValueError("new_column_name必须是字符串或字符串列表")
+                raise ValueError("new_column_name必须是None、字符串或字符串列表")
             
             # 如果提供了表名且需要注册，则注册到本地引擎
             if table_name is not None and register and self.minispark is not None:

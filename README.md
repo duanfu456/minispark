@@ -559,6 +559,53 @@ df_with_ranges = processor.apply_custom_function(
     calculate_min_max_salary,       // 返回多个值的函数
     table_name='employees_with_ranges'  // 自动注册为新表
 )
+
+// 支持函数返回字典动态创建列 (new_column_name=None)
+def calculate_benefits_dict(row):
+    // 根据员工信息计算福利，以字典形式返回
+    bonus = row['salary'] * 0.1 if row['department'] == 'IT' else row['salary'] * 0.05
+    stock_options = row['salary'] * 0.2 if row['department'] == 'IT' else 0
+    return {
+        'bonus': round(bonus, 2),
+        'stock_options': round(stock_options, 2),
+        'total_compensation': row['salary'] + bonus + stock_options
+    }
+
+// 当new_column_name为None时，函数返回的字典键会自动成为新列名
+df_with_benefits = processor.apply_custom_function(
+    df,
+    None,  // new_column_name为None，表示根据函数返回的字典动态创建列
+    calculate_benefits_dict
+)
+
+// 支持函数返回字典列表动态展开行 (new_column_name=None)
+def generate_skill_list(row):
+    // 为每个员工生成技能列表，以字典列表形式返回
+    base_skills = ['Communication', 'Teamwork']
+    
+    if row['department'] == 'IT':
+        extra_skills = ['Python', 'SQL', 'Problem Solving']
+    elif row['department'] == 'HR':
+        extra_skills = ['Recruitment', 'Employee Relations']
+    else:  // Finance
+        extra_skills = ['Financial Analysis', 'Excel', 'Reporting']
+    
+    // 返回字典列表，每个字典将变成一行
+    skills_list = []
+    for skill in (base_skills + extra_skills):
+        skills_list.append({
+            'name': row['name'],
+            'department': row['department'],
+            'skill': skill
+        })
+    return skills_list
+
+// 当new_column_name为None时，函数返回的字典列表会自动展开为多行
+df_with_skills = processor.apply_custom_function(
+    df,
+    None,  // new_column_name为None，表示根据函数返回的字典列表动态展开行
+    generate_skill_list
+)
 ```
 
 ### 2. 查看已注册的表
@@ -642,6 +689,8 @@ df_step3 = processor.explode_column(df_step2, 'features', ['-', '#'])
 examples/
 ├── example_row_function.py          # 简化API处理整行数据示例
 ├── example_multi_column.py          # 多列处理示例
+├── example_auto_register.py         # DataProcessor自动注册功能示例
+├── example_dict_return.py           # 返回字典功能示例
 ├── comprehensive_example.py         # 综合示例
 ├── run_all_examples.py              # 运行所有示例的脚本
 ├── csv/                             # CSV相关示例
@@ -678,4 +727,9 @@ examples/
 └── duckdb/                          # DuckDB相关示例
     ├── example.py
     └── generate_data.py
-``````
+````````
+```
+
+```
+
+```

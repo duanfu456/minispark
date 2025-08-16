@@ -80,8 +80,8 @@ class TestProcessorAutoRegister(unittest.TestCase):
         # 应用自定义函数并自动注册结果
         result = self.spark.processor.apply_custom_function(
             data,
-            'total_compensation',
             lambda row: row['salary'] + row['bonus'],
+            'total_compensation',
             table_name='employees_with_compensation'
         )
         

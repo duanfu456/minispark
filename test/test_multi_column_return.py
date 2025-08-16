@@ -31,8 +31,8 @@ class TestMultiColumnReturn(unittest.TestCase):
         # 应用返回单个值的函数
         result = self.processor.apply_custom_function(
             data, 
-            'sum', 
-            lambda row: row['a'] + row['b']
+            lambda row: row['a'] + row['b'],
+            ['sum']
         )
         
         # 验证结果
@@ -53,8 +53,8 @@ class TestMultiColumnReturn(unittest.TestCase):
         # 应用返回列表的函数
         result = self.processor.apply_custom_function(
             data, 
-            ['min_val', 'max_val'], 
-            lambda row: [min(row['a'], row['b'], row['c']), max(row['a'], row['b'], row['c'])]
+            lambda row: [min(row['a'], row['b'], row['c']), max(row['a'], row['b'], row['c'])],
+            ['min_val', 'max_val']
         )
         
         # 验证结果
@@ -82,11 +82,11 @@ class TestMultiColumnReturn(unittest.TestCase):
         # 应用返回元组的函数
         result = self.processor.apply_custom_function(
             data,
-            ['total', 'discount_amount'],
             lambda row: (
                 row['price'] * row['quantity'] * (1 - row['discount']),  # 总价
                 row['price'] * row['quantity'] * row['discount']         # 折扣金额
-            )
+            ),
+            ['total', 'discount_amount']
         )
         
         # 验证结果
@@ -117,11 +117,11 @@ class TestMultiColumnReturn(unittest.TestCase):
         # 应用返回字典的函数
         result = self.processor.apply_custom_function(
             data,
-            ['average', 'highest'],
             lambda row: {
-                'avg': (row['score1'] + row['score2'] + row['score3']) / 3,
-                'max': max(row['score1'], row['score2'], row['score3'])
-            }
+                'average': (row['score1'] + row['score2'] + row['score3']) / 3,
+                'highest': max(row['score1'], row['score2'], row['score3'])
+            },
+            ['average', 'highest']
         )
         
         # 验证结果
@@ -151,8 +151,8 @@ class TestMultiColumnReturn(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             self.processor.apply_custom_function(
                 data,
-                ['col1', 'col2', 'col3'],  # 要求3列
-                lambda row: [row['a'], row['b']]  # 但只返回2个值
+                lambda row: [row['a'], row['b']],  # 但只返回2个值
+                ['col1', 'col2', 'col3']  # 要求3列
             )
         
         self.assertIn("返回的值数量", str(context.exception))
@@ -170,8 +170,8 @@ class TestMultiColumnReturn(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             self.processor.apply_custom_function(
                 data,
-                [],  # 空列表
-                lambda row: row['a'] + row['b']
+                lambda row: row['a'] + row['b'],
+                []
             )
         
         self.assertIn("new_column_name列表不能为空", str(context.exception))
@@ -186,8 +186,8 @@ class TestMultiColumnReturn(unittest.TestCase):
         # 应用返回单个值的函数，但指定多个列
         result = self.processor.apply_custom_function(
             data,
-            ['copy1', 'copy2', 'copy3'],
-            lambda row: row['a'] * 2
+            lambda row: row['a'] * 2,
+            ['copy1', 'copy2', 'copy3']
         )
         
         # 验证结果
