@@ -11,7 +11,7 @@ def main():
     """主函数"""
     parser = argparse.ArgumentParser(description="MiniSpark CLI工具")
     parser.add_argument(
-        "--version", action="version", version="%(prog)s {version}".format(version="0.1.5")
+        "--version", action="version", version="%(prog)s {version}".format(version="0.1.10")
     )
     
     # 添加子命令

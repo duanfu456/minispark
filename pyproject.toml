@@ -3,8 +3,8 @@ requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "minispqrk"
-version = "0.1.9"
+name = "minispark"
+version = "0.1.10"
 description = "一个轻量级的Python库，用于从多种数据源读取数据并在本地进行高效处理，类似于Apache Spark的功能"
 readme = "README.md"
 authors = [
@@ -35,11 +35,12 @@ requires-python = ">=3.9"
 mysql = ["pymysql>=1.0.0"]
 duckdb = ["duckdb>=0.3.0"]
 excel = ["openpyxl>=3.0.0", "xlrd>=2.0.0"]
+clickhouse = ["clickhouse-driver>=0.2.0"]
 
 [project.urls]
-Homepage = "https://github.com/your-username/minispark"
-Repository = "https://github.com/your-username/minispark"
-Documentation = "https://github.com/your-username/minispark#readme"
+Homepage = "https://github.com/duanfu456/minispark"
+Repository = "https://github.com/duanfu456/minispark"
+Documentation = "https://github.com/duanfu456/minispark#readme"
 
 [project.scripts]
 minispark = "minispark.cli:main"

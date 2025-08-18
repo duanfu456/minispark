@@ -21,7 +21,7 @@ MiniSpark是一个轻量级的Python库，用于从多种数据源读取数据�
 ## 安装
 
 ```bash
-pip install minispqrk
+pip install minispark
 ```
 
 对于特定数据库支持，可以安装额外的依赖：
@@ -49,12 +49,36 @@ minispark --help
 minispark example
 ```
 
+### ClickHouse 连接器使用示例
+
+```python
+from minispark import MiniSpark, ClickHouseConnector
+
+# 初始化
+spark = MiniSpark()
+
+# 添加 ClickHouse 连接器
+clickhouse = ClickHouseConnector(
+    name='ch',
+    host='localhost',
+    port=9000,
+    user='default',
+    password='',
+    database='default'
+)
+spark.add_connector('clickhouse', clickhouse)
+
+# 查询数据
+df = spark.load_data('clickhouse', 'SELECT * FROM table', 'my_table')
+```
+
 ## 支持的数据源
 
 1. **关系型数据库**：
    - MySQL
    - DuckDB
    - SQLite
+   - ClickHouse
 
 2. **文件格式**：
    - CSV
@@ -727,4 +751,4 @@ examples/
 └── duckdb/                          # DuckDB相关示例
     ├── example.py
     └── generate_data.py
-````````
+```
